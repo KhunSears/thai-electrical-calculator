@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบออกแบบคำนวณสายไฟฟ้าและท่อร้อยสาย (EIT Standard)</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=5.0">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <h1>⚡ EIT Electrical Design Toolkit</h1>
+                <div class="subtitle">โปรแกรมคำนวณขนาดสายไฟฟ้า ท่อร้อยสาย และพิกัดหม้อแปลง ตามมาตรฐาน วสท. 022001-22</div>
+            </div>
+            <span class="version-badge">EIT 2.0 (ค.ศ. 2026)</span>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab(event, 'calculator')">📊 เครื่องคำนวณการออกแบบ (Sizing Calculator)</button>
+            <button class="tab-btn" onclick="switchTab(event, 'transformer')">🔌 คำนวณหม้อแปลง (Transformer Toolkit)</button>
+            <button class="tab-btn" onclick="switchTab(event, 'lookup')">🔍 ตารางมาตรฐาน วสท. (Table Lookup)</button>
+        </div>
+
+        <!-- Tab 1: Calculator Mode -->
+        <div id="calculator" class="tab-content active">
+            <!-- Inputs Panel -->
+            <div class="card">
+                <div class="card-title">📝 ระบุพารามิเตอร์การออกแบบ</div>
+                
+                <div class="form-group">
+                    <label for="mode">โหมดการคำนวณ</label>
+                    <select id="mode" onchange="toggleMode()">
+                        <option value="load" selected>คำนวณตามกระแสโหลด (Calculate by Load)</option>
+                        <option value="breaker">เลือกตามขนาดเซอร์กิตเบรกเกอร์ (Select by Breaker Size)</option>
+                    </select>
+                </div>
+
+                <div class="flex-row-inputs">
+                    <div class="form-group">
+                        <label for="phase">ระบบไฟฟ้า (Phase)</label>
+                        <select id="phase" onchange="runCalculation()">
+                            <option value="1Ø">1 เฟส 2 สาย (230 V)</option>
+                            <option value="3Ø" selected>3 เฟส 4 สาย (400 V)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="cableMaterial">ประเภทโลหะตัวนำ</label>
+                        <select id="cableMaterial" onchange="runCalculation()">
+                            <option value="COPPER" selected>ทองแดง (Copper)</option>
+                            <option value="ALUMINUM">อะลูมิเนียม (Aluminum)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Load Mode Inputs -->
+                <div id="loadInputs">
+                    <div class="flex-row-inputs">
+                        <div class="form-group">
+                            <label for="powerInput">ขนาดโหลดสูงสุด</label>
+                            <div class="input-container input-with-suffix">
+                                <input type="number" id="powerInput" value="30" oninput="onPowerInput()">
+                                <span class="input-suffix">kW</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="pf">Power Factor (cos φ)</label>
+                            <input type="number" id="pf" value="0.85" step="0.05" min="0.1" max="1" oninput="runCalculation()">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="currentInput">กระแสไฟฟ้าโหลดคำนวณ (Ib)</label>
+                        <div class="input-container input-with-suffix">
+                            <input type="number" id="currentInput" value="51" oninput="onCurrentInput()">
+                            <span class="input-suffix">A</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="loadType">ประเภทการใช้งานโหลด</label>
+                        <select id="loadType" onchange="runCalculation()">
+                            <option value="continuous" selected>โหลดต่อเนื่อง (Continuous - 125%)</option>
+                            <option value="non-continuous">โหลดทั่วไป (Non-Continuous - 100%)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Breaker Mode Inputs -->
+                <div id="breakerInputs" style="display: none;">
+                    <div class="form-group">
+                        <label for="breakerSizeSelect">ขนาดพิกัดเซอร์กิตเบรกเกอร์ (MCCB)</label>
+                        <select id="breakerSizeSelect" onchange="runCalculation()">
+                            <option value="10">10 A</option>
+                            <option value="16">16 A</option>
+                            <option value="20">20 A</option>
+                            <option value="25">25 A</option>
+                            <option value="32">32 A</option>
+                            <option value="40">40 A</option>
+                            <option value="50">50 A</option>
+                            <option value="63" selected>63 A</option>
+                            <option value="80">80 A</option>
+                            <option value="100">100 A</option>
+                            <option value="125">125 A</option>
+                            <option value="160">160 A</option>
+                            <option value="200">200 A</option>
+                            <option value="250">250 A</option>
+                            <option value="320">320 A</option>
+                            <option value="400">400 A</option>
+                            <option value="500">500 A</option>
+                            <option value="630">630 A</option>
+                            <option value="800">800 A</option>
+                            <option value="1000">1000 A</option>
+                            <option value="1250">1250 A</option>
+                            <option value="1600">1600 A</option>
+                            <option value="2000">2000 A</option>
+                            <option value="2500">2500 A</option>
+                            <option value="3000">3000 A</option>
+                            <option value="3200">3200 A</option>
+                            <option value="4000">4000 A</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex-row-inputs">
+                    <div class="form-group">
+                        <label for="cableType">ชนิดสายไฟฟ้า</label>
+                        <select id="cableType" onchange="runCalculation()">
+                            <option value="IEC_01" selected>IEC 01 (THW)</option>
+                            <option value="NYY_1C">NYY (แกนเดี่ยว)</option>
+                            <option value="CV_1C">CV (XLPE แกนเดี่ยว)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="installation">รูปแบบการเดินสาย</label>
+                        <select id="installation" onchange="runCalculation()">
+                            <option value="conduit_air" selected>ร้อยท่อในอากาศ (กลุ่ม 2)</option>
+                            <option value="conduit_ground">ร้อยท่อฝังดิน (กลุ่ม 5)</option>
+                            <option value="wireway">รางเดินสาย (Wireway)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex-row-inputs">
+                    <div class="form-group">
+                        <label for="conduitType">ชนิดวัสดุท่อร้อยสาย</label>
+                        <select id="conduitType" onchange="runCalculation()">
+                            <option value="metal" selected>ท่อโลหะ (Metal Conduit)</option>
+                            <option value="nonmetal">ท่ออโลหะ (Non-metal / PVC / HDPE)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="distance">ระยะทางเดินสายไฟฟ้า</label>
+                        <div class="input-container input-with-suffix">
+                            <input type="number" id="distance" value="50" oninput="runCalculation()">
+                            <span class="input-suffix">เมตร</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="spacingInputGroup" style="display: none; margin-bottom: 15px;">
+                    <div class="form-group">
+                        <label for="conduitSpacing">การจัดวางท่อร้อยสาย (ใต้ดิน)</label>
+                        <select id="conduitSpacing" onchange="runCalculation()">
+                            <option value="touching" selected>วางแบบชิดกัน (Touching)</option>
+                            <option value="spaced_250">ระยะห่าง 250 มม. (250 mm Spacing)</option>
+                            <option value="spaced_500">ระยะห่าง 500 มม. (500 mm Spacing)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="alert-box info">
+                    💡 <strong>หมายเหตุ:</strong> ระบบคำนวณตามพิกัดและขนาดมาตรฐาน วสท. 022001-22 ล่าสุด
+                </div>
+            </div>
+
+            <!-- Outputs & Visualizer Panel -->
+            <div class="card">
+                <div class="card-title">🏆 ผลการออกแบบที่แนะนำ</div>
+                
+                <div class="output-grid">
+                    <div class="output-tile">
+                        <span class="tile-label">ขนาดเครื่องป้องกัน (MCCB)</span>
+                        <span class="tile-value cyan" id="outMccb">--</span>
+                        <span class="tile-subtext">พิกัดเบรกเกอร์สูงสุด</span>
+                    </div>
+                    
+                    <div class="output-tile">
+                        <span class="tile-label">ขนาดสายไฟแนะนำ (ตามพิกัดกระแส)</span>
+                        <span class="tile-value green" id="outCable">--</span>
+                        <span class="tile-subtext" id="outRuns">--</span>
+                    </div>
+
+                    <div class="output-tile">
+                        <span class="tile-label">ท่อร้อยสายแนะนำ (Conduit)</span>
+                        <span class="tile-value amber" id="outConduit">--</span>
+                        <span class="tile-subtext" id="outConduitFill">อัตราร้อยสายจริง: --</span>
+                    </div>
+
+                    <div class="output-tile">
+                        <span class="tile-label">รางเดินสายแนะนำ (Wireway)</span>
+                        <span class="tile-value cyan" id="outWireway">--</span>
+                        <span class="tile-subtext">คำนวณพิกัดพื้นที่เติมไม่เกิน 20%</span>
+                    </div>
+
+                    <div class="output-tile span-2">
+                        <span class="tile-label">แรงดันตก (Voltage Drop)</span>
+                        <span class="tile-value green" id="outVdrop">--</span>
+                        <span class="tile-subtext" id="outVdropStatus">--</span>
+                    </div>
+
+                    <div id="vdropRecommendationCard" class="output-tile span-2" style="display: none; background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.2);">
+                        <span class="tile-label" style="color: var(--accent-amber);">⚠️ คำแนะนำการเพิ่มขนาดสายไฟเนื่องจากแรงดันตก</span>
+                        <span class="tile-value amber" id="outRecommendedCableVdrop">--</span>
+                        <span class="tile-subtext" style="color: var(--text-primary); font-weight: 500;" id="outRecommendedCableVdropDetails">เพื่อช่วยรักษาพิกัดแรงดันตกให้ปลอดภัยไม่เกิน 5%</span>
+                    </div>
+                </div>
+
+                <!-- Live Conduit Cross-Section Visualizer -->
+                <div class="cable-visualizer">
+                    <span style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 12px; font-weight: 500;" id="visualizerTitle">
+                        ภาพจำลองหน้าตัดภายในท่อร้อยสาย (Conduit Cross-Section)
+                    </span>
+                    <div id="visualizerConduit">
+                        <!-- Generated Dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Transformer Sizing and Protection -->
+        <div id="transformer" class="tab-content">
+            <!-- Transformer Inputs -->
+            <div class="card">
+                <div class="card-title">🔌 พารามิเตอร์การออกแบบหม้อแปลง</div>
+                
+                <div class="form-group">
+                    <label for="trKva">ขนาดพิกัดหม้อแปลง (Transformer Rating)</label>
+                    <select id="trKva" onchange="runTransformerCalculation()">
+                        <option value="50">50 kVA</option>
+                        <option value="100">100 kVA</option>
+                        <option value="160">160 kVA</option>
+                        <option value="250" selected>250 kVA</option>
+                        <option value="315">315 kVA</option>
+                        <option value="400">400 kVA</option>
+                        <option value="500">500 kVA</option>
+                        <option value="630">630 kVA</option>
+                        <option value="800">800 kVA</option>
+                        <option value="1000">1000 kVA</option>
+                        <option value="1250">1250 kVA</option>
+                        <option value="1500">1500 kVA</option>
+                        <option value="1600">1600 kVA</option>
+                        <option value="2000">2000 kVA</option>
+                        <option value="2500">2500 kVA</option>
+                    </select>
+                </div>
+
+                <div class="flex-row-inputs">
+                    <div class="form-group">
+                        <label for="trType">ประเภทหม้อแปลง</label>
+                        <select id="trType" onchange="runTransformerCalculation()">
+                            <option value="oil" selected>ชนิดน้ำมัน (Oil-Type)</option>
+                            <option value="dry">ชนิดแห้ง (Dry-Type)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="trVoltsHv">พิกัดแรงดันด้านแรงสูง (HV Rating)</label>
+                        <select id="trVoltsHv" onchange="runTransformerCalculation()">
+                            <option value="22" selected>22 kV</option>
+                            <option value="24">24 kV</option>
+                            <option value="33">33 kV</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="percentZ">เปอร์เซ็นต์อิมพีแดนซ์ (%Z)</label>
+                    <div class="input-container input-with-suffix">
+                        <input type="number" id="percentZ" value="4" step="0.5" min="2" max="10" oninput="runTransformerCalculation()">
+                        <span class="input-suffix">%</span>
+                    </div>
+                </div>
+
+                <div class="alert-box info">
+                    🛡️ <strong>เกณฑ์การคำนวณความปลอดภัย:</strong><br>
+                    - ดรอปเอาต์ฟิวส์แรงสูงคำนวณเผื่อกระแสลัดวงจรชั่วครู่เพิ่ม 1.33 เท่า ($I_{\text{fuse}} = I_p \times 1.33$)<br>
+                    - กระแสลัดวงจรด้านแรงต่ำ $I_{sc}$ เผื่อตัวคูณปลอดภัยเพิ่ม 1.25 เท่าเพื่อใช้เลือกพิกัดความทนทานต่อกระแสลัดวงจร (kA)
+                </div>
+            </div>
+
+            <!-- Transformer Outputs -->
+            <div class="card">
+                <div class="card-title">🏆 พิกัดป้องกันที่แนะนำ (Protection Sizing)</div>
+                
+                <div class="output-grid">
+                    <div class="output-tile">
+                        <span class="tile-label">กระแสไฟฟ้าเต็มพิกัดด้านแรงสูง (Ip)</span>
+                        <span class="tile-value cyan" id="outTrIp">-- A</span>
+                        <span class="tile-subtext">พิกัดกระแสปกติ</span>
+                    </div>
+
+                    <div class="output-tile">
+                        <span class="tile-label">ขนาด Dropout Fuse แรงสูง</span>
+                        <span class="tile-value amber" id="outTrFuse">-- A</span>
+                        <span class="tile-subtext" id="outTrFuseCalc">กระแสเผื่อ (1.33x): -- A</span>
+                    </div>
+
+                    <div class="output-tile">
+                        <span class="tile-label">กระแสไฟฟ้าด้านแรงต่ำ (Is)</span>
+                        <span class="tile-value cyan" id="outTrIs">-- A</span>
+                        <span class="tile-subtext">แรงดัน 400 V</span>
+                    </div>
+
+                    <div class="output-tile">
+                        <span class="tile-label">กระแสลัดวงจรหม้อแปลง (Isc)</span>
+                        <span class="tile-value rose" id="outTrIsc">-- kA</span>
+                        <span class="tile-subtext" id="outTrIscDesign">พิกัดดีไซน์ (1.25x): -- kA</span>
+                    </div>
+
+                    <div class="output-tile span-2" style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2);">
+                        <span class="tile-label" style="color: var(--accent-green);">เบรกเกอร์เมนแรงต่ำที่แนะนำ</span>
+                        <span class="tile-value green" id="outTrBreaker">-- A</span>
+                        <span class="tile-subtext" style="color: var(--text-primary); font-weight: 600; margin-top: 8px;" id="outTrBreakerType">--</span>
+                        <span class="tile-subtext" style="font-size: 0.85rem; margin-top: 6px; line-height: 1.4;" id="outTrBreakerReason">แนะนำรายละเอียด...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Table Lookup Mode -->
+        <div id="lookup" class="tab-content">
+            <div class="card" style="grid-column: span 2;">
+                <div class="card-title">📖 ตารางพิกัดสายและท่ออ้างอิง วสท. 022001-22</div>
+
+                <!-- Row 1: Phase / Material / Cable Type -->
+                <div style="display: flex; gap: 14px; margin-bottom: 12px; flex-wrap: wrap;">
+                    <div class="form-group" style="flex: 1; min-width: 160px;">
+                        <label for="tablePhase">ระบบไฟฟ้า</label>
+                        <select id="tablePhase" onchange="loadLookupTable()">
+                            <option value="1Ø">1 เฟส 2 สาย (230 V)</option>
+                            <option value="3Ø" selected>3 เฟส 4 สาย (400 V)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex: 1; min-width: 160px;">
+                        <label for="tableMaterial">ตัวนำไฟฟ้า</label>
+                        <select id="tableMaterial" onchange="loadLookupTable()">
+                            <option value="COPPER" selected>ทองแดง (Copper)</option>
+                            <option value="ALUMINUM">อะลูมิเนียม (Aluminum)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex: 1; min-width: 200px;">
+                        <label for="tableCable">ประเภทและชนิดสายไฟ</label>
+                        <select id="tableCable" onchange="loadLookupTable()">
+                            <optgroup label="── ร้อยท่อในอากาศ (กลุ่ม 2) ──">
+                                <option value="IEC_01" selected>IEC 01 / THW (PVC) ในท่ออากาศ</option>
+                                <option value="NYY_1C_AIR">NYY (PVC/PVC) แกนเดี่ยว ในท่ออากาศ</option>
+                                <option value="CV_1C_AIR">CV / XLPE แกนเดี่ยว ในท่ออากาศ</option>
+                            </optgroup>
+                            <optgroup label="── ร้อยท่อฝังดิน (กลุ่ม 5) ──">
+                                <option value="NYY_1C_GND">NYY (PVC/PVC) แกนเดี่ยว ฝังดิน</option>
+                                <option value="CV_1C_GND">CV / XLPE แกนเดี่ยว ฝังดิน</option>
+                            </optgroup>
+                            <optgroup label="── รางเดินสาย Wireway (20% fill) ──">
+                                <option value="IEC_01_WW">IEC 01 / THW ในรางเดินสาย</option>
+                                <option value="NYY_1C_WW">NYY แกนเดี่ยว ในรางเดินสาย</option>
+                                <option value="CV_1C_WW">CV / XLPE แกนเดี่ยว ในรางเดินสาย</option>
+                            </optgroup>
+                            <optgroup label="── รางเคเบิล Cable Tray (25% fill) ──">
+                                <option value="NYY_1C_TRAY_FLAT">NYY วางแบบแบน (Flat)</option>
+                                <option value="CV_1C_TRAY_FLAT">CV / XLPE วางแบบแบน (Flat)</option>
+                                <option value="NYY_1C_TRAY_TRF">NYY วางสามเหลี่ยม (Trefoil)</option>
+                                <option value="CV_1C_TRAY_TRF">CV / XLPE วางสามเหลี่ยม (Trefoil)</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Cable Tray sub-options (shown conditionally) -->
+                <div id="trayOptionsRow" style="display: none; gap: 14px; margin-bottom: 16px; flex-wrap: wrap; padding: 12px 14px; border: 1px solid rgba(56,189,248,0.18); border-radius: 10px; background: rgba(56,189,248,0.04);">
+                    <div class="form-group" style="flex: 1; min-width: 180px;">
+                        <label for="trayType">ประเภทรางเคเบิล (Cable Tray)</label>
+                        <select id="trayType" onchange="loadLookupTable()">
+                            <option value="ladder" selected>บันได (Ladder Tray)</option>
+                            <option value="ventilated">ระบายอากาศ (Ventilated Tray)</option>
+                            <option value="solid">ด้านล่างทึบ (Solid Bottom Tray)</option>
+                            <option value="solid_covered">ด้านล่างทึบ + มีฝาปิด (Covered)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex: 1; min-width: 180px;">
+                        <label for="trayWidth">ความกว้างรางเคเบิล</label>
+                        <select id="trayWidth" onchange="loadLookupTable()">
+                            <option value="150">150 mm</option>
+                            <option value="200">200 mm</option>
+                            <option value="300" selected>300 mm</option>
+                            <option value="450">450 mm</option>
+                            <option value="600">600 mm</option>
+                            <option value="750">750 mm</option>
+                            <option value="900">900 mm</option>
+                            <option value="1000">1000 mm</option>
+                        </select>
+                    </div>
+                    <div class="alert-box info" style="flex: 100%; margin: 0; font-size: 0.8rem;">
+                        🔖 <strong>ตาราง 5-46 วสท.:</strong> รางบันได/ระบายอากาศ Fill 25% · รางทึบ Fill 20% · รางทึบมีฝา ดีเรตกระแสสาย 15% เพิ่มเติม
+                    </div>
+                </div>
+
+                <!-- Dynamic Table -->
+                <div class="table-wrapper">
+                    <table>
+                        <thead id="tableHead">
+                            <tr>
+                                <th>พิกัด MCCB / ACB (A)</th>
+                                <th>ขนาดสายไฟต่อชุด</th>
+                                <th id="th_parallel">จำนวนชุดควบ (Parallel)</th>
+                                <th id="th3">ขนาดท่อร้อยสาย (Conduit)</th>
+                                <th>พื้นที่หน้าตัดต่อชุด (ตร.มม.)</th>
+                                <th id="th5" style="display:none;">ขนาดรางที่แนะนำ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <!-- Populated Dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="legend-container">
+                    <div class="legend-item"><div class="legend-color color-green"></div><span>ตรวจสอบเรียบร้อยแล้ว</span></div>
+                    <div class="legend-item"><div class="legend-color color-amber"></div><span>อ้างอิงตรงตามคู่มือมาตรฐาน</span></div>
+                    <div class="legend-item"><div style="width:12px;height:12px;border-radius:3px;background:rgba(56,189,248,0.4);"></div><span>รางเดินสาย / รางเคเบิล</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Merged Sizing Logic Script -->
+    <script>
+        // Standard MCCB Ratings (Amperes)
+        const mccbSizes = [10, 16, 20, 25, 32, 40, 50, 63, 80, 100, 125, 160, 200, 250, 320, 400, 500, 630, 800, 1000, 1250, 1600, 2000, 2500, 3000, 3200, 4000];
+
+        // Conductor Sizes (sq.mm.)
+        const cableSizes = [1.5, 2.5, 4, 6, 10, 16, 25, 35, 50, 70, 95, 120, 150, 185, 240, 300, 400, 500];
+
+        // Cable specs (insulation included)
+        const cableSpecs = {
+            'COPPER': {
+                'IEC_01': {
+                    1.5: { od: 3.3, area: 8.55 },
+                    2.5: { od: 4.0, area: 12.56 },
+                    4: { od: 4.6, area: 16.61 },
+                    6: { od: 5.2, area: 21.23 },
+                    10: { od: 6.7, area: 35.24 },
+                    16: { od: 7.8, area: 47.76 },
+                    25: { od: 9.7, area: 73.86 },
+                    35: { od: 10.9, area: 93.27 },
+                    50: { od: 12.8, area: 128.61 },
+                    70: { od: 14.6, area: 167.33 },
+                    95: { od: 17.1, area: 229.54 },
+                    120: { od: 18.8, area: 277.45 },
+                    150: { od: 20.9, area: 342.90 },
+                    185: { od: 23.3, area: 426.17 },
+                    240: { od: 26.6, area: 555.43 },
+                    300: { od: 29.6, area: 687.79 },
+                    400: { od: 33.2, area: 865.26 },
+                    500: { od: 38.0, area: 1064.00 }
+                },
+                'NYY_1C': {
+                    1.5: { od: 6.5, area: 33.17 },
+                    2.5: { od: 7.0, area: 38.47 },
+                    4: { od: 7.5, area: 44.16 },
+                    6: { od: 8.0, area: 50.24 },
+                    10: { od: 9.0, area: 63.59 },
+                    16: { od: 9.5, area: 70.85 },
+                    25: { od: 11.5, area: 103.82 },
+                    35: { od: 12.5, area: 122.66 },
+                    50: { od: 14.0, area: 153.86 },
+                    70: { od: 15.5, area: 188.60 },
+                    95: { od: 17.5, area: 240.41 },
+                    120: { od: 19.5, area: 298.50 },
+                    150: { od: 21.5, area: 362.87 },
+                    185: { od: 23.5, area: 433.52 },
+                    240: { od: 26.5, area: 551.27 },
+                    300: { od: 29.0, area: 660.19 },
+                    400: { od: 33.0, area: 855.00 },
+                    500: { od: 38.5, area: 1164.00 }
+                },
+                'CV_1C': {
+                    1.5: { od: 5.0, area: 19.63 },
+                    2.5: { od: 5.4, area: 22.90 },
+                    4: { od: 6.0, area: 28.27 },
+                    6: { od: 6.6, area: 34.21 },
+                    10: { od: 7.5, area: 44.18 },
+                    16: { od: 8.5, area: 56.74 },
+                    25: { od: 10.0, area: 78.54 },
+                    35: { od: 11.0, area: 95.03 },
+                    50: { od: 12.5, area: 122.72 },
+                    70: { od: 14.0, area: 153.94 },
+                    95: { od: 16.0, area: 201.06 },
+                    120: { od: 17.5, area: 240.53 },
+                    150: { od: 19.5, area: 298.65 },
+                    185: { od: 21.5, area: 363.05 },
+                    240: { od: 24.0, area: 452.39 },
+                    300: { od: 26.5, area: 551.55 },
+                    400: { od: 31.5, area: 829.58 },
+                    500: { od: 35.0, area: 1443.00 }
+                }
+            },
+            'ALUMINUM': {
+                'IEC_01': {
+                    10: { od: 7.5, area: 44.18 },
+                    16: { od: 8.5, area: 56.74 },
+                    25: { od: 10.0, area: 78.54 },
+                    35: { od: 11.2, area: 98.52 },
+                    50: { od: 13.0, area: 132.73 },
+                    70: { od: 14.8, area: 172.03 },
+                    95: { od: 17.0, area: 226.98 },
+                    120: { od: 18.8, area: 277.59 },
+                    150: { od: 20.8, area: 339.79 },
+                    185: { od: 23.2, area: 422.73 },
+                    240: { od: 26.3, area: 543.25 },
+                    300: { od: 29.2, area: 669.66 },
+                    400: { od: 33.0, area: 855.30 },
+                    500: { od: 37.0, area: 1075.00 }
+                },
+                'NYY_1C': {
+                    10: { od: 9.8, area: 75.43 },
+                    16: { od: 10.5, area: 86.59 },
+                    25: { od: 12.0, area: 113.10 },
+                    35: { od: 13.5, area: 143.14 },
+                    50: { od: 15.0, area: 176.71 },
+                    70: { od: 17.0, area: 226.98 },
+                    95: { od: 19.0, area: 283.53 },
+                    120: { od: 21.0, area: 346.36 },
+                    150: { od: 23.0, area: 415.48 },
+                    185: { od: 25.5, area: 510.71 },
+                    240: { od: 28.5, area: 637.94 },
+                    300: { od: 31.5, area: 779.31 },
+                    400: { od: 35.0, area: 962.11 },
+                    500: { od: 39.0, area: 1200.00 }
+                },
+                'CV_1C': {
+                    10: { od: 8.2, area: 52.81 },
+                    16: { od: 9.0, area: 63.62 },
+                    25: { od: 10.5, area: 86.59 },
+                    35: { od: 11.8, area: 109.36 },
+                    50: { od: 13.5, area: 143.14 },
+                    70: { od: 15.0, area: 176.71 },
+                    95: { od: 17.2, area: 232.35 },
+                    120: { od: 19.0, area: 283.53 },
+                    150: { od: 21.0, area: 346.36 },
+                    185: { od: 23.0, area: 415.48 },
+                    240: { od: 26.0, area: 530.93 },
+                    300: { od: 28.8, area: 651.44 },
+                    400: { od: 32.5, area: 829.58 },
+                    500: { od: 36.5, area: 1045.00 }
+                }
+            }
+        };
+
+        // Voltage drop factors (mV/A/m)
+        const vdFactors = {
+            'COPPER': {
+                1.5: 29, 2.5: 18, 4: 11, 6: 7.3, 10: 4.4, 16: 2.8, 25: 1.81,
+                35: 1.33, 50: 1.00, 70: 0.71, 95: 0.56, 120: 0.48, 150: 0.41,
+                185: 0.36, 240: 0.30, 300: 0.27, 400: 0.25, 500: 0.23
+            },
+            'ALUMINUM': {
+                10: 7.5, 16: 4.6, 25: 3.0, 35: 2.2, 50: 1.6, 70: 1.2, 95: 0.92,
+                120: 0.79, 150: 0.68, 185: 0.59, 240: 0.49, 300: 0.44, 400: 0.41,
+                500: 0.38
+            }
+        };
+
+        // Conduit and Wireway list
+        const conduitSizes = [
+            { size: 15, name: '1/2" (15mm)', area: 177 },
+            { size: 20, name: '3/4" (20mm)', area: 314 },
+            { size: 25, name: '1" (25mm)', area: 491 },
+            { size: 32, name: '1 1/4" (32mm)', area: 804 },
+            { size: 40, name: '1 1/2" (40mm)', area: 1257 },
+            { size: 50, name: '2" (50mm)', area: 1964 },
+            { size: 65, name: '2 1/2" (65mm)', area: 3318 },
+            { size: 80, name: '3" (80mm)', area: 5027 },
+            { size: 90, name: '3 1/2" (90mm)', area: 6362 },
+            { size: 100, name: '4" (100mm)', area: 7854 },
+            { size: 125, name: '5" (125mm)', area: 12272 },
+            { size: 150, name: '6" (150mm)', area: 17672 }
+        ];
+
+        const wirewaySizes = [
+            { width: 50, height: 100, name: '50x100 mm', area: 5000 },
+            { width: 75, height: 100, name: '75x100 mm', area: 7500 },
+            { width: 100, height: 100, name: '100x100 mm', area: 10000 },
+            { width: 100, height: 150, name: '100x150 mm', area: 15000 },
+            { width: 150, height: 150, name: '150x150 mm', area: 22500 },
+            { width: 100, height: 200, name: '100x200 mm', area: 20000 },
+            { width: 150, height: 200, name: '150x200 mm', area: 30000 },
+            { width: 100, height: 250, name: '100x250 mm', area: 25000 },
+            { width: 150, height: 250, name: '150x250 mm', area: 37500 },
+            { width: 100, height: 300, name: '100x300 mm', area: 30000 },
+            { width: 150, height: 300, name: '150x300 mm', area: 45000 },
+            { width: 200, height: 300, name: '200x300 mm', area: 60000 }
+        ];
+
+        // Standard Ampacities
+        const ampacityTable = {
+            'COPPER': {
+                'IEC_01': {
+                    '1Ø': {
+                        1.5: 15, 2.5: 21, 4: 28, 6: 36, 10: 50, 16: 66, 25: 88, 35: 109,
+                        50: 131, 70: 167, 95: 202, 120: 234, 150: 261, 185: 297, 240: 348,
+                        300: 398, 400: 475, 500: 540
+                    },
+                    '3Ø': {
+                        1.5: 14, 2.5: 18, 4: 24, 6: 31, 10: 44, 16: 59, 25: 77, 35: 96,
+                        50: 117, 70: 149, 95: 180, 120: 208, 150: 228, 185: 258, 240: 301,
+                        300: 343, 400: 406, 500: 468
+                    }
+                },
+                'NYY_1C': {
+                    '1Ø': {
+                        1.5: 17, 2.5: 23, 4: 31, 6: 42, 10: 60, 16: 81, 25: 111, 35: 137,
+                        50: 169, 70: 217, 95: 271, 120: 316, 150: 364, 185: 424, 240: 509,
+                        300: 592, 400: 696, 500: 800
+                    },
+                    '3Ø': {
+                        1.5: 15, 2.5: 20, 4: 27, 6: 35, 10: 50, 16: 66, 25: 89, 35: 110,
+                        50: 134, 70: 171, 95: 212, 120: 244, 150: 279, 185: 324, 240: 388,
+                        300: 448, 400: 521, 500: 600
+                    }
+                },
+                'CV_1C': {
+                    '1Ø': {
+                        1.5: 22, 2.5: 31, 4: 42, 6: 54, 10: 71, 16: 94, 25: 124, 35: 150,
+                        50: 180, 70: 223, 95: 271, 120: 313, 150: 355, 185: 406, 240: 477,
+                        300: 543, 400: 625, 500: 710
+                    },
+                    '3Ø': {
+                        1.5: 18, 2.5: 25, 4: 34, 6: 44, 10: 59, 16: 77, 25: 99, 35: 119,
+                        50: 145, 70: 179, 95: 215, 120: 247, 150: 279, 185: 321, 240: 371,
+                        300: 418, 400: 478, 500: 550
+                    }
+                }
+            },
+            'ALUMINUM': {
+                'IEC_01': {
+                    '1Ø': {
+                        10: 39, 16: 51, 25: 68, 35: 84, 50: 113, 70: 141, 95: 171, 120: 202,
+                        150: 240, 185: 282, 240: 328, 300: 373, 400: 448, 500: 520
+                    },
+                    '3Ø': {
+                        10: 30, 16: 40, 25: 56, 35: 67, 50: 78, 70: 92, 95: 113, 120: 127,
+                        150: 141, 185: 171, 240: 221, 300: 271, 400: 315, 500: 360
+                    }
+                },
+                'NYY_1C': {
+                    '1Ø': {
+                        10: 46, 16: 62, 25: 85, 35: 105, 50: 130, 70: 167, 95: 208, 120: 243,
+                        150: 280, 185: 326, 240: 391, 300: 455, 400: 535, 500: 615
+                    },
+                    '3Ø': {
+                        10: 35, 16: 48, 25: 65, 35: 81, 50: 100, 70: 128, 95: 159, 120: 186,
+                        150: 213, 185: 249, 240: 298, 300: 347, 400: 408, 500: 470
+                    }
+                },
+                'CV_1C': {
+                    '1Ø': {
+                        10: 54, 16: 72, 25: 95, 35: 115, 50: 138, 70: 171, 95: 208, 120: 240,
+                        150: 272, 185: 311, 240: 365, 300: 415, 400: 477, 500: 550
+                    },
+                    '3Ø': {
+                        10: 41, 16: 55, 25: 72, 35: 87, 50: 105, 70: 130, 95: 158, 120: 181,
+                        150: 202, 185: 237, 240: 278, 300: 316, 400: 362, 500: 420
+                    }
+                }
+            }
+        };
+
+        const standardFuseSizes = [1, 2, 3, 5, 8, 10, 12, 15, 20, 25, 30, 40, 50, 65, 80, 100];
+
+        function getEgcSize(mccbRating) {
+            if (mccbRating <= 16) return 1.5;
+            if (mccbRating <= 20) return 2.5;
+            if (mccbRating <= 40) return 4;
+            if (mccbRating <= 70) return 6;
+            if (mccbRating <= 100) return 10;
+            if (mccbRating <= 200) return 16;
+            if (mccbRating <= 400) return 25;
+            if (mccbRating <= 500) return 35;
+            if (mccbRating <= 800) return 50;
+            if (mccbRating <= 1000) return 70;
+            if (mccbRating <= 1250) return 95;
+            if (mccbRating <= 2000) return 120;
+            if (mccbRating <= 2500) return 185;
+            return 240;
+        }
+
+        function getGecSize(phaseSize) {
+            if (phaseSize <= 35) return 10;
+            if (phaseSize <= 50) return 16;
+            if (phaseSize <= 95) return 25;
+            if (phaseSize <= 185) return 35;
+            if (phaseSize <= 300) return 50;
+            if (phaseSize <= 500) return 70;
+            return 95;
+        }
+
+        function calculateSizing(inputs) {
+            const { mode, phase, loadCurrent, breakerSize, loadType, cableMaterial, cableType, installation, conduitType, conduitSpacing } = inputs;
+            
+            let selectedMccb = breakerSize;
+            if (mode === 'load') {
+                const multiplier = (loadType === 'continuous') ? 1.25 : 1.0;
+                const targetMccb = loadCurrent * multiplier;
+                selectedMccb = mccbSizes.find(size => size >= targetMccb);
+                if (!selectedMccb) {
+                    selectedMccb = mccbSizes[mccbSizes.length - 1];
+                }
+            }
+            
+            // In EIT standards, phaseCount is 2 for 1Ø and 4 for 3Ø (counting Phase + Neutral)
+            let phaseCount = (phase === '1Ø') ? 2 : 4; 
+            let groundCount = 1;
+            let totalCablesCount = phaseCount + groundCount;
+
+            const materialMap = ampacityTable[cableMaterial] || ampacityTable['COPPER'];
+            const typeMap = materialMap[cableType] || materialMap['IEC_01'];
+            const ampMap = typeMap[phase];
+            const availableSizes = Object.keys(ampMap).map(Number).sort((a,b)=>a-b);
+            
+            const requiredAmpacity = selectedMccb;
+            
+            // Spacing derating logic for Group 5 (ร้อยท่อฝังดิน) according to Table 5-46
+            function getDerating(runs, mccb, installationType, spacingType) {
+                if (installationType !== 'conduit_ground') return 1.0;
+                
+                let effectiveSpacing = spacingType || 'touching';
+                if (spacingType === 'touching') {
+                    if (mccb >= 1000 && mccb <= 2000) {
+                        effectiveSpacing = 'spaced_250';
+                    } else if (mccb >= 2500 && mccb <= 4000) {
+                        return 0.80; // No entry in Table 5-46, assume 0.80 as requested
+                    }
+                }
+                
+                if (effectiveSpacing === 'touching') {
+                    // Table 5-43 touching factors for conduits underground
+                    if (runs === 1) return 1.0;
+                    if (runs === 2) return 0.85;
+                    if (runs === 3) return 0.75;
+                    if (runs === 4) return 0.70;
+                    if (runs === 5) return 0.65;
+                    return 0.60;
+                } else if (effectiveSpacing === 'spaced_250') {
+                    // Table 5-46 250mm spacing factors
+                    if (runs === 1) return 1.0;
+                    if (runs === 2) return 0.90;
+                    if (runs === 3) return 0.85;
+                    if (runs === 4) return 0.80;
+                    if (runs === 5) return 0.80;
+                    if (runs === 6) return 0.80;
+                    return 0.80; // Fallback for higher runs
+                } else if (effectiveSpacing === 'spaced_500') {
+                    // Table 5-46 500mm spacing factors
+                    if (runs === 1) return 1.0;
+                    if (runs === 2) return 0.95;
+                    if (runs === 3) return 0.90;
+                    if (runs === 4) return 0.85;
+                    if (runs === 5) return 0.85;
+                    return 0.80;
+                }
+                return 1.0;
+            }
+
+            let parallelRuns = 1;
+            let selectedPhaseSize = availableSizes[0];
+            let found = false;
+
+            // Iterate run counts to find matching size with derating factor
+            for (let runs = 1; runs <= 15; runs++) {
+                const derat = getDerating(runs, selectedMccb, installation, conduitSpacing);
+                const reqAmpPerRun = requiredAmpacity / (runs * derat);
+                
+                let sizeFits = null;
+                for (let size of availableSizes) {
+                    if (ampMap[size] >= reqAmpPerRun) {
+                        sizeFits = size;
+                        break;
+                    }
+                }
+                
+                if (sizeFits !== null) {
+                    parallelRuns = runs;
+                    selectedPhaseSize = sizeFits;
+                    found = true;
+                    break;
+                }
+            }
+            
+            if (!found) {
+                parallelRuns = 12;
+                selectedPhaseSize = availableSizes[availableSizes.length - 1];
+            }
+            
+            const selectedEgcSize = getEgcSize(selectedMccb);
+            const selectedGecSize = getGecSize(selectedPhaseSize);
+            
+            const specsMap = cableSpecs[cableMaterial] || cableSpecs['COPPER'];
+            const spec = specsMap[cableType] || specsMap['IEC_01'];
+            
+            const phaseAreaPerRun = (spec[selectedPhaseSize] ? spec[selectedPhaseSize].area : 0) * phaseCount;
+            const egcAreaPerRun = (spec[selectedEgcSize] ? spec[selectedEgcSize].area : 0) * groundCount;
+            const totalCableAreaPerRun = phaseAreaPerRun + egcAreaPerRun;
+            
+            const fillLimit = (totalCablesCount >= 3) ? 0.40 : (totalCablesCount === 2 ? 0.31 : 0.53);
+            const requiredConduitArea = totalCableAreaPerRun / fillLimit;
+            
+            let selectedConduit = conduitSizes.find(c => c.area >= requiredConduitArea);
+            if (!selectedConduit) {
+                selectedConduit = { name: 'เกินพิกัดท่อเดี่ยว (แนะนำเดินขนาน)', area: requiredConduitArea };
+            }
+            
+            const totalCableAreaAllRuns = totalCableAreaPerRun * parallelRuns;
+            const requiredWirewayArea = totalCableAreaAllRuns / 0.20;
+            let selectedWireway = wirewaySizes.find(w => w.area >= requiredWirewayArea);
+            if (!selectedWireway) {
+                selectedWireway = { name: 'เกินขนาดมาตรฐาน (แนะนำเดินขนาน)', area: requiredWirewayArea };
+            }
+
+            // Get effective spacing and derating for display
+            const deratingFactor = getDerating(parallelRuns, selectedMccb, installation, conduitSpacing);
+            let spacingText = 'ทั่วไป';
+            if (installation === 'conduit_ground') {
+                let effectiveSpacing = conduitSpacing || 'touching';
+                if (conduitSpacing === 'touching') {
+                    if (selectedMccb >= 1000 && selectedMccb <= 2000) {
+                        effectiveSpacing = 'spaced_250';
+                    }
+                }
+                if (effectiveSpacing === 'touching') spacingText = 'วางชิดกัน (ตาราง 5-43)';
+                else if (effectiveSpacing === 'spaced_250') {
+                    spacingText = (conduitSpacing === 'touching' ? 'ชิดกัน (ปรับเป็น 250 มม. อัตโนมัติ)' : 'ห่าง 250 มม. (ตาราง 5-46)');
+                }
+                else if (effectiveSpacing === 'spaced_500') spacingText = 'ห่าง 500 มม. (ตาราง 5-46)';
+                
+                if (selectedMccb >= 2500 && selectedMccb <= 4000 && conduitSpacing === 'touching') {
+                    spacingText = 'ชิดกัน (ตัวคูณคงที่ 0.80)';
+                }
+            }
+            
+            return {
+                mccb: selectedMccb,
+                phaseSize: selectedPhaseSize,
+                egcSize: selectedEgcSize,
+                gecSize: selectedGecSize,
+                parallelRuns,
+                totalArea: totalCableAreaPerRun,
+                conduit: selectedConduit.name,
+                wireway: selectedWireway.name,
+                fillLimit: (fillLimit * 100).toFixed(0) + '%',
+                actualFill: selectedConduit.area ? ((totalCableAreaPerRun / selectedConduit.area) * 100).toFixed(1) + '%' : 'N/A',
+                deratingFactor: deratingFactor.toFixed(2),
+                spacingText: spacingText
+            };
+        }
+
+        function calculateTransformer(inputs) {
+            const { kva, vHv, percentZ, trType } = inputs;
+            
+            const ip = kva / (Math.sqrt(3) * vHv);
+            const targetFuse = ip * 1.33;
+            let recommendedFuse = standardFuseSizes.find(size => size >= targetFuse);
+            if (!recommendedFuse) {
+                recommendedFuse = standardFuseSizes[standardFuseSizes.length - 1];
+            }
+            
+            const is = kva / (Math.sqrt(3) * 0.4);
+            const isc = is / (percentZ / 100);
+            const iscDesign = isc * 1.25;
+            
+            const targetBreaker = is * 1.25;
+            let recommendedBreaker = mccbSizes.find(size => size >= targetBreaker);
+            if (!recommendedBreaker) {
+                recommendedBreaker = mccbSizes[mccbSizes.length - 1];
+            }
+            
+            let recommendedBreakerType = 'MCCB (Molded Case Circuit Breaker)';
+            let typeReason = 'เนื่องจากกระแสไฟฟ้าด้านแรงต่ำสูงสุดไม่เกิน 800 A การเลือกใช้ MCCB จึงเหมาะสม ประหยัดค่าใช้จ่าย และสามารถเลือกพิกัดทนกระแสลัดวงจร (IC) ที่ตรงตามพิกัด Isc ได้';
+            
+            if (recommendedBreaker >= 800 && recommendedBreaker <= 1250) {
+                recommendedBreakerType = 'MCCB (ชนิด Electronic Trip) หรือ ACB';
+                typeReason = 'กระแสไฟฟ้าอยู่ในช่วง 800A ถึง 1250A สามารถเลือกใช้ MCCB คุณภาพสูงรุ่นที่มีชุดปรับตั้งแบบอิเล็กทรอนิกส์ได้ แต่หากติดตั้งในแผงสวิตช์ประธานขนาดใหญ่ที่ต้องเปิดใช้งานต่อเนื่องและต้องการความทนทานเชิงกลสูง แนะนำให้เลือกใช้ ACB (Air Circuit Breaker)';
+            } else if (recommendedBreaker > 1250) {
+                recommendedBreakerType = 'ACB (Air Circuit Breaker)';
+                typeReason = 'กระแสไฟฟ้าด้านแรงต่ำสูงเกิน 1250 A จำเป็นต้องเลือกใช้ ACB เพื่อความคงทนและทนทานเชิงกลที่สูงกว่า, มีความยืดหยุ่นในการปรับแต่งพิกัดป้องกัน และมีพิกัดการทนกระแสลัดวงจร (kA) ที่สูงเพื่อรองรับแรงเค้นเชิงกลและเชิงความร้อนได้อย่างปลอดภัย';
+            }
+            
+            return {
+                ip: ip.toFixed(2),
+                fuseCalc: targetFuse.toFixed(2),
+                recommendedFuse,
+                is: is.toFixed(2),
+                isc: (isc / 1000).toFixed(2),
+                iscDesign: (iscDesign / 1000).toFixed(2),
+                recommendedBreaker,
+                breakerType: recommendedBreakerType,
+                reason: typeReason
+            };
+        }
+
+        function findCableSizeForVoltageDrop(inputs) {
+            const { phase, loadCurrent, breakerSize, mode, cableMaterial, cableType, distance } = inputs;
+            
+            const current = (mode === 'load') ? loadCurrent : breakerSize;
+            const systemVoltage = (phase === '1Ø') ? 230 : 400;
+            const maxVdropAllow = 0.05 * systemVoltage; 
+            
+            const baseSizing = calculateSizing(inputs);
+            let selectedSize = baseSizing.phaseSize;
+            let parallelRuns = baseSizing.parallelRuns;
+            
+            const materialFactors = vdFactors[cableMaterial] || vdFactors['COPPER'];
+            
+            let vdFactor = materialFactors[selectedSize] || 2.0;
+            let currentVdrop = (vdFactor * (current / parallelRuns) * distance) / 1000;
+            
+            if (currentVdrop <= maxVdropAllow) {
+                return {
+                    vdropVal: currentVdrop.toFixed(2),
+                    pct: ((currentVdrop / systemVoltage) * 100).toFixed(2),
+                    upsizedNeeded: false,
+                    recommendedSize: selectedSize
+                };
+            }
+            
+            const materialMap = ampacityTable[cableMaterial];
+            const typeMap = materialMap[cableType];
+            const ampMap = typeMap[phase];
+            const availableSizes = Object.keys(ampMap).map(Number).sort((a,b)=>a-b);
+            
+            let recommendedSize = selectedSize;
+            let foundSizing = false;
+            
+            const baseIndex = availableSizes.indexOf(selectedSize);
+            if (baseIndex !== -1) {
+                for (let i = baseIndex; i < availableSizes.length; i++) {
+                    const size = availableSizes[i];
+                    const sizeVdFactor = materialFactors[size] || 2.0;
+                    const sizeVdrop = (sizeVdFactor * (current / parallelRuns) * distance) / 1000;
+                    
+                    if (sizeVdrop <= maxVdropAllow) {
+                        recommendedSize = size;
+                        currentVdrop = sizeVdrop;
+                        foundSizing = true;
+                        break;
+                    }
+                }
+            }
+            
+            return {
+                vdropVal: currentVdrop.toFixed(2),
+                pct: ((currentVdrop / systemVoltage) * 100).toFixed(2),
+                upsizedNeeded: foundSizing && (recommendedSize !== selectedSize),
+                recommendedSize
+            };
+        }
+
+        // Tab switching logic
+        function switchTab(evt, tabId) {
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            document.getElementById(tabId).classList.add('active');
+            evt.currentTarget.classList.add('active');
+            
+            if (tabId === 'lookup') {
+                loadLookupTable();
+            } else if (tabId === 'transformer') {
+                runTransformerCalculation();
+            }
+        }
+
+        // Toggle inputs between Load calculation mode and Breaker sizing mode
+        function toggleMode() {
+            const mode = document.getElementById('mode').value;
+            if (mode === 'load') {
+                document.getElementById('loadInputs').style.display = 'block';
+                document.getElementById('breakerInputs').style.display = 'none';
+            } else {
+                document.getElementById('loadInputs').style.display = 'none';
+                document.getElementById('breakerInputs').style.display = 'block';
+            }
+            runCalculation();
+        }
+
+        // Live conversion from Power input (kW) to Load Current
+        function onPowerInput() {
+            const kw = parseFloat(document.getElementById('powerInput').value) || 0;
+            const phase = document.getElementById('phase').value;
+            const pf = parseFloat(document.getElementById('pf').value) || 0.85;
+            
+            let amp = 0;
+            if (phase === '1Ø') {
+                amp = (kw * 1000) / (230 * pf);
+            } else {
+                amp = (kw * 1000) / (Math.sqrt(3) * 400 * pf);
+            }
+            
+            document.getElementById('currentInput').value = amp.toFixed(1);
+            runCalculation();
+        }
+
+        // Live conversion from Current input (A) to Load Power
+        function onCurrentInput() {
+            const amp = parseFloat(document.getElementById('currentInput').value) || 0;
+            const phase = document.getElementById('phase').value;
+            const pf = parseFloat(document.getElementById('pf').value) || 0.85;
+            
+            let kw = 0;
+            if (phase === '1Ø') {
+                kw = (amp * 230 * pf) / 1000;
+            } else {
+                kw = (amp * Math.sqrt(3) * 400 * pf) / 1000;
+            }
+            
+            document.getElementById('powerInput').value = kw.toFixed(1);
+            runCalculation();
+        }
+
+        // Sizing and rendering visualizer
+        function runCalculation() {
+            const mode = document.getElementById('mode').value;
+            const phase = document.getElementById('phase').value;
+            const cableMaterial = document.getElementById('cableMaterial').value;
+            const loadCurrent = parseFloat(document.getElementById('currentInput').value) || 0;
+            const breakerSize = parseInt(document.getElementById('breakerSizeSelect').value) || 16;
+            const loadType = document.getElementById('loadType').value;
+            const cableType = document.getElementById('cableType').value;
+            const installation = document.getElementById('installation').value;
+            const conduitType = document.getElementById('conduitType').value;
+            const distance = parseFloat(document.getElementById('distance').value) || 0;
+            
+            // Show/Hide Spacing input based on installation mode
+            const spacingInputGroup = document.getElementById('spacingInputGroup');
+            if (installation === 'conduit_ground') {
+                spacingInputGroup.style.display = 'block';
+            } else {
+                spacingInputGroup.style.display = 'none';
+            }
+            
+            const conduitSpacing = document.getElementById('conduitSpacing').value;
+            
+            const results = calculateSizing({
+                mode,
+                phase,
+                loadCurrent,
+                breakerSize,
+                loadType,
+                cableMaterial,
+                cableType,
+                installation,
+                conduitType,
+                conduitSpacing
+            });
+            
+            // Update Dashboard outputs
+            document.getElementById('outMccb').innerText = results.mccb + ' A';
+            document.getElementById('outCable').innerText = `${results.parallelRuns > 1 ? results.parallelRuns + 'x(' : ''}${phase === '1Ø' ? '2' : '4'}x${results.phaseSize}/${results.egcSize}G${results.parallelRuns > 1 ? ')' : ''}`;
+            document.getElementById('outRuns').innerText = results.parallelRuns > 1 ? `เดินสายขนาน ${results.parallelRuns} ชุด` : 'สายเดี่ยวเดิน 1 วงจร';
+            document.getElementById('outConduit').innerText = results.conduit;
+            
+            // Format conduit fill text to include derating details if underground
+            if (installation === 'conduit_ground') {
+                document.getElementById('outConduitFill').innerHTML = `อัตราร้อยสายจริง: ${results.actualFill} (สูงสุด ${results.fillLimit})<br><span style="color: var(--accent-amber); font-size: 0.72rem; font-weight: 500; display: inline-block; margin-top: 4px;">📍 การวาง: ${results.spacingText}<br>⚡ ตัวคูณดีเรตกระแส: ${results.deratingFactor}</span>`;
+            } else {
+                document.getElementById('outConduitFill').innerText = `อัตราร้อยสายจริง: ${results.actualFill} (สูงสุด ${results.fillLimit})`;
+            }
+            
+            document.getElementById('outWireway').innerText = results.wireway;
+            
+            // Voltage Drop calculation
+            const vdFactor = (cableMaterial === 'COPPER') ? (vdFactors.COPPER[results.phaseSize] || 2.0) : (vdFactors.ALUMINUM[results.phaseSize] || 3.2);
+            const currentForVdrop = (mode === 'load') ? loadCurrent : results.mccb;
+            const vDrop = (vdFactor * (currentForVdrop / results.parallelRuns) * distance) / 1000;
+            const systemVoltage = (phase === '1Ø') ? 230 : 400;
+            const pctVdrop = (vDrop / systemVoltage) * 100;
+            
+            const vdropElement = document.getElementById('outVdrop');
+            vdropElement.innerText = `${vDrop.toFixed(2)} V (${pctVdrop.toFixed(2)}%)`;
+            
+            // Handle recommendation based on voltage drop
+            const vdropInfo = findCableSizeForVoltageDrop({
+                mode,
+                phase,
+                loadCurrent,
+                breakerSize,
+                loadType,
+                cableMaterial,
+                cableType,
+                installation,
+                conduitType,
+                distance,
+                conduitSpacing
+            });
+            
+            if (pctVdrop > 5.0) {
+                vdropElement.className = 'tile-value rose';
+                document.getElementById('outVdropStatus').innerText = `⚠️ แรงดันตกเกินขีดจำกัด 5% (ระยะทาง ${distance} ม.)`;
+                
+                // Show recommendation
+                document.getElementById('vdropRecommendationCard').style.display = 'flex';
+                document.getElementById('outRecommendedCableVdrop').innerText = `${results.parallelRuns > 1 ? results.parallelRuns + 'x(' : ''}${phase === '1Ø' ? '2' : '4'}x${vdropInfo.recommendedSize}/${results.egcSize}G${results.parallelRuns > 1 ? ')' : ''}`;
+                document.getElementById('outRecommendedCableVdropDetails').innerText = `เพื่อชดเชยแรงดันตกให้ปลอดภัย (แรงดันตกเหลือประมาณ ${vdropInfo.pct}% หรือ ${vdropInfo.vdropVal} V)`;
+            } else {
+                vdropElement.className = 'tile-value green';
+                document.getElementById('outVdropStatus').innerText = `✅ แรงดันตกอยู่ในเกณฑ์ที่ยอมรับได้ (ระยะทาง ${distance} ม.)`;
+                document.getElementById('vdropRecommendationCard').style.display = 'none';
+            }
+            
+            // Render Dynamic Conduit Visualization (showing conduits in parallel)
+            renderVisualizer(phase === '1Ø' ? 2 : 4, results.parallelRuns);
+        }
+
+        function renderVisualizer(wireCount, parallelCount) {
+            const container = document.getElementById('visualizerConduit');
+            container.innerHTML = '';
+            container.style.display = 'flex';
+            container.style.flexWrap = 'wrap';
+            container.style.gap = '12px';
+            container.style.justifyContent = 'center';
+            
+            const titleElement = document.getElementById('visualizerTitle');
+            if (parallelCount > 1) {
+                titleElement.innerText = `ภาพจำลองท่อร้อยสายควบจำนวน ${parallelCount} ท่อ (Conduit Parallel Runs)`;
+            } else {
+                titleElement.innerText = 'ภาพจำลองหน้าตัดภายในท่อร้อยสาย (Conduit Cross-Section)';
+            }
+            
+            for (let p = 0; p < parallelCount; p++) {
+                const conduit = document.createElement('div');
+                conduit.className = 'conduit-circle';
+                conduit.style.width = '100px';
+                conduit.style.height = '100px';
+                conduit.style.borderWidth = '4px';
+                conduit.style.margin = '0';
+                
+                // Append wire circles inside this conduit run
+                for (let i = 0; i < wireCount; i++) {
+                    const wire = document.createElement('div');
+                    wire.className = 'wire-circle phase';
+                    wire.innerText = 'L';
+                    wire.style.width = '16px';
+                    wire.style.height = '16px';
+                    wire.style.fontSize = '0.6rem';
+                    conduit.appendChild(wire);
+                }
+                
+                const ground = document.createElement('div');
+                ground.className = 'wire-circle ground';
+                ground.innerText = 'G';
+                ground.style.width = '14px';
+                ground.style.height = '14px';
+                ground.style.fontSize = '0.55rem';
+                conduit.appendChild(ground);
+                
+                container.appendChild(conduit);
+            }
+        }
+
+        // Run Transformer specific calculations
+        function runTransformerCalculation() {
+            const kva = parseFloat(document.getElementById('trKva').value) || 250;
+            const trType = document.getElementById('trType').value;
+            const vHv = parseFloat(document.getElementById('trVoltsHv').value) || 22;
+            const percentZ = parseFloat(document.getElementById('percentZ').value) || 4;
+            
+            const results = calculateTransformer({
+                kva,
+                trType,
+                vHv,
+                percentZ
+            });
+            
+            // Update Transformer outputs
+            document.getElementById('outTrIp').innerText = `${results.ip} A`;
+            document.getElementById('outTrFuse').innerText = `${results.recommendedFuse} A`;
+            document.getElementById('outTrFuseCalc').innerText = `กระแสคำนวณเผื่อ (1.33x): ${results.fuseCalc} A`;
+            document.getElementById('outTrIs').innerText = `${results.is} A`;
+            document.getElementById('outTrIsc').innerText = `${results.isc} kA`;
+            document.getElementById('outTrIscDesign').innerText = `พิกัดดีไซน์ (1.25x): ${results.iscDesign} kA`;
+            document.getElementById('outTrBreaker').innerText = `${results.recommendedBreaker} A`;
+            document.getElementById('outTrBreakerType').innerText = `ชนิดเบรกเกอร์: ${results.breakerType}`;
+            document.getElementById('outTrBreakerReason').innerText = results.reason;
+        }
+
+
+
+
+        // ──── Lookup Table Logic ────
+
+        // Map from tableCable value → { ampKey, specKey, installGroup }
+        const cableTableMap = {
+            'IEC_01':         { ampKey: 'IEC_01', specKey: 'IEC_01', group: 'conduit', fill: 0.40, label: 'IEC 01 / THW ในท่ออากาศ (กลุ่ม 2)' },
+            'NYY_1C_AIR':     { ampKey: 'NYY_1C', specKey: 'NYY_1C', group: 'conduit', fill: 0.40, label: 'NYY แกนเดี่ยว ในท่ออากาศ (กลุ่ม 2)' },
+            'CV_1C_AIR':      { ampKey: 'CV_1C',  specKey: 'CV_1C',  group: 'conduit', fill: 0.40, label: 'CV / XLPE แกนเดี่ยว ในท่ออากาศ (กลุ่ม 2)' },
+            'NYY_1C_GND':     { ampKey: 'NYY_1C', specKey: 'NYY_1C', group: 'conduit', fill: 0.40, label: 'NYY แกนเดี่ยว ร้อยท่อฝังดิน (กลุ่ม 5)' },
+            'CV_1C_GND':      { ampKey: 'CV_1C',  specKey: 'CV_1C',  group: 'conduit', fill: 0.40, label: 'CV / XLPE แกนเดี่ยว ร้อยท่อฝังดิน (กลุ่ม 5)' },
+            'IEC_01_WW':      { ampKey: 'IEC_01', specKey: 'IEC_01', group: 'wireway', fill: 0.20, label: 'IEC 01 / THW ในรางเดินสาย (Wireway 20%)' },
+            'NYY_1C_WW':      { ampKey: 'NYY_1C', specKey: 'NYY_1C', group: 'wireway', fill: 0.20, label: 'NYY ในรางเดินสาย (Wireway 20%)' },
+            'CV_1C_WW':       { ampKey: 'CV_1C',  specKey: 'CV_1C',  group: 'wireway', fill: 0.20, label: 'CV / XLPE ในรางเดินสาย (Wireway 20%)' },
+            'NYY_1C_TRAY_FLAT':{ ampKey: 'NYY_1C', specKey: 'NYY_1C', group: 'tray', fill: 0.25, label: 'NYY วางแบบแบน บนรางเคเบิล (25%)' },
+            'CV_1C_TRAY_FLAT': { ampKey: 'CV_1C',  specKey: 'CV_1C',  group: 'tray', fill: 0.25, label: 'CV / XLPE วางแบบแบน บนรางเคเบิล (25%)' },
+            'NYY_1C_TRAY_TRF': { ampKey: 'NYY_1C', specKey: 'NYY_1C', group: 'tray', fill: 0.25, label: 'NYY วางสามเหลี่ยม (Trefoil) บนรางเคเบิล' },
+            'CV_1C_TRAY_TRF':  { ampKey: 'CV_1C',  specKey: 'CV_1C',  group: 'tray', fill: 0.25, label: 'CV / XLPE วางสามเหลี่ยม (Trefoil) บนรางเคเบิล' }
+        };
+
+        // Tray derating factors (solid covered = extra 15% derating on ampacity)
+        const trayDeratingMap = {
+            'ladder': 1.00, 'ventilated': 1.00, 'solid': 1.00, 'solid_covered': 0.85
+        };
+
+        function generateLookupTable(cableTableKey, phase, material, trayTypeVal, trayWidthVal) {
+            const rows = [];
+            const cfg = cableTableMap[cableTableKey];
+            if (!cfg) return rows;
+
+            const matMap = ampacityTable[material || 'COPPER'];
+            if (!matMap) return rows;
+            const typeMap = matMap[cfg.ampKey] || matMap['IEC_01'];
+            const ampMap = typeMap[phase];
+            if (!ampMap) return rows;
+
+            const specsMap = cableSpecs[material || 'COPPER'];
+            const spec = specsMap[cfg.specKey] || specsMap['IEC_01'];
+
+            const phaseCount = (phase === '1\u00d8') ? 2 : 4;
+            const fill = cfg.fill;
+            const group = cfg.group;
+            const trayWidth = parseInt(trayWidthVal || 300);
+            const trayDerat = trayDeratingMap[trayTypeVal || 'ladder'] || 1.0;
+            const isTray = (group === 'tray');
+            const isWireway = (group === 'wireway');
+
+            const availSizes = Object.keys(ampMap).map(Number).sort((a,b)=>a-b);
+            const maxSingleSize = availSizes[availSizes.length - 1];
+            const maxSingleAmp = isTray ? ampMap[maxSingleSize] * trayDerat : ampMap[maxSingleSize];
+
+            // For 1-phase, only go up to 800A; for 3-phase all MCCB sizes
+            const maxMccb = (phase === '3\u00d8') ? 4000 : 800;
+
+            mccbSizes.forEach(mccb => {
+                if (mccb > maxMccb) return;
+
+                // Determine required parallel runs
+                let parallelRuns = 1;
+                let phaseSize = null;
+
+                // Try single run first
+                for (let sz of availSizes) {
+                    const eff = isTray ? ampMap[sz] * trayDerat : ampMap[sz];
+                    if (eff >= mccb) { phaseSize = sz; break; }
+                }
+
+                // If single run not enough, calculate parallel runs
+                if (!phaseSize) {
+                    parallelRuns = Math.ceil(mccb / maxSingleAmp);
+                    phaseSize = maxSingleSize;
+                    // Verify: phaseSize * parallelRuns must cover mccb
+                    const effPerRun = isTray ? ampMap[phaseSize] * trayDerat : ampMap[phaseSize];
+                    while ((effPerRun * parallelRuns) < mccb && parallelRuns < 20) {
+                        parallelRuns++;
+                    }
+                }
+
+                if (!phaseSize) return;
+
+                const egc = getEgcSize(mccb);
+                const phaseArea = spec[phaseSize] ? spec[phaseSize].area : 0;
+                // EGC only in IEC_01 (in-tube), for NYY/CV single-core use same spec key
+                const egcArea = spec[egc] ? spec[egc].area : (phaseArea * 0.5);
+                const totalAreaPerRun = (phaseArea * phaseCount) + egcArea;
+
+                let conduitText = '-';
+                let trayText = '-';
+
+                if (group === 'conduit') {
+                    const reqConduitArea = totalAreaPerRun / fill;
+                    const cond = conduitSizes.find(c => c.area >= reqConduitArea);
+                    conduitText = cond ? cond.name : 'เกินพิกัดท่อเดี่ยว';
+                } else if (isWireway) {
+                    // Wireway: total area of ALL runs
+                    const totalAreaAll = totalAreaPerRun * parallelRuns;
+                    const reqWWArea = totalAreaAll / fill;
+                    const ww = wirewaySizes.find(w => w.area >= reqWWArea);
+                    conduitText = '-';
+                    trayText = ww ? ww.name : 'เกินพิกัดรางเดี่ยว';
+                } else if (isTray) {
+                    const trayArea = trayWidth * 100;
+                    const fillLimit = (trayTypeVal === 'ventilated' || trayTypeVal === 'ladder') ? 0.25 : 0.20;
+                    const maxCableArea = trayArea * fillLimit;
+                    const cableODArea = totalAreaPerRun;
+                    const circuitsFit = Math.floor(maxCableArea / cableODArea);
+                    const trayDerStr = trayDerat < 1 ? ` (ดีเรต ${(trayDerat*100).toFixed(0)}%)` : '';
+                    conduitText = '-';
+                    trayText = `${trayWidth} mm${trayDerStr} (รับได้ ~${circuitsFit > 0 ? circuitsFit : 1} ชุด)`;
+                }
+
+                const cableSpec = parallelRuns > 1
+                    ? `${parallelRuns}×(${phaseCount}x${phaseSize}/${egc}G)`
+                    : `${phaseCount}x${phaseSize}/${egc}G`;
+
+                rows.push({
+                    mccb,
+                    cable: cableSpec,
+                    parallelRuns,
+                    area: totalAreaPerRun.toFixed(1),
+                    conduit: conduitText,
+                    tray: trayText,
+                    group,
+                    isParallel: parallelRuns > 1
+                });
+            });
+
+            return rows;
+        }
+
+        // Lookup Table Loader (supports all cable types and 3-phase up to 4000A)
+        function loadLookupTable() {
+            const phase    = document.getElementById('tablePhase').value;
+            const material = document.getElementById('tableMaterial').value;
+            const cableKey = document.getElementById('tableCable').value;
+            const trayType = document.getElementById('trayType').value;
+            const trayWidth= document.getElementById('trayWidth').value;
+            const cfg      = cableTableMap[cableKey] || {};
+            const group    = cfg.group || 'conduit';
+
+            // Show / hide tray options panel
+            document.getElementById('trayOptionsRow').style.display = (group === 'tray') ? 'flex' : 'none';
+
+            // Update column headers
+            const th3 = document.getElementById('th3');
+            const th5 = document.getElementById('th5');
+            const thP = document.getElementById('th_parallel');
+            if (group === 'conduit') {
+                th3.innerText = 'ขนาดท่อต่อชุด (Conduit)';
+                th3.style.display = '';
+                th5.style.display = 'none';
+            } else if (group === 'wireway') {
+                th3.style.display = 'none';
+                th5.innerText = 'ขนาดรางเดินสาย (Wireway)';
+                th5.style.display = '';
+            } else {
+                th3.style.display = 'none';
+                th5.innerText = `รางเคเบิล ${trayWidth} mm`;
+                th5.style.display = '';
+            }
+
+            const rows = generateLookupTable(cableKey, phase, material, trayType, trayWidth);
+            const body = document.getElementById('tableBody');
+            body.innerHTML = '';
+
+            rows.forEach(row => {
+                const isParallel = row.isParallel;
+                const tr = document.createElement('tr');
+                // Highlight parallel rows with a subtle amber tint
+                if (isParallel) {
+                    tr.style.background = 'rgba(245,158,11,0.06)';
+                }
+                tr.innerHTML = `
+                    <td><strong style="color:${isParallel ? 'var(--accent-amber)' : 'inherit'}">${row.mccb} A${isParallel ? '' : ''}</strong></td>
+                    <td style="font-size:0.82rem;">${row.cable}</td>
+                    <td style="text-align:center;">
+                        ${isParallel
+                            ? `<span style="background:rgba(245,158,11,0.18);color:var(--accent-amber);font-weight:700;padding:2px 8px;border-radius:5px;font-size:0.8rem;">${row.parallelRuns} ชุดควบ</span>`
+                            : `<span style="color:var(--text-secondary);font-size:0.78rem;">1 ชุด</span>`
+                        }
+                    </td>
+                    <td style="${group === 'conduit' ? '' : 'display:none;'}">
+                        <span style="color:var(--accent-cyan);font-weight:600;font-size:0.85rem;">${row.conduit}</span>
+                    </td>
+                    <td style="font-size:0.82rem;">${row.area} mm²</td>
+                    <td style="${group !== 'conduit' ? '' : 'display:none;'}">
+                        <span style="color:var(--accent-green);font-weight:600;font-size:0.82rem;">${row.tray}</span>
+                    </td>
+                `;
+                body.appendChild(tr);
+            });
+
+            if (rows.length === 0) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td colspan="6" style="text-align:center;color:var(--text-secondary);padding:24px;">ไม่พบข้อมูลสำหรับตัวเลือกนี้</td>`;
+                body.appendChild(tr);
+            }
+        }
+
+        // Initialize calculations on load
+        window.onload = function() {
+            onPowerInput();
+        };
+    </script>
+</body>
+</html>
